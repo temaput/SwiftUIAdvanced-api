@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from .service import UserService, get_user_service
+from .service import UserService
 
 from .models import SignupDTO, TokenDTO, User, UserInDB
 
@@ -20,7 +20,7 @@ credentials_exception = HTTPException(
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],
                            service: Annotated[UserService,
-                                              Depends(get_user_service)]):
+                                              Depends()]):
     token_data = service.verify_token(token)
     user = await service.get(username=token_data.username)
     if user is None:
@@ -36,8 +36,9 @@ async def get_current_active_user(
 
 
 @router.post("/signup/")
-async def signup(user: SignupDTO, db: Annotated[UserService, Depends(get_user_service)]):
-    result = await db.create(user)
+async def signup(user: SignupDTO, service: Annotated[UserService, Depends()]):
+    result = await service.create(user)
+    
     return result
 
 
@@ -45,7 +46,7 @@ async def signup(user: SignupDTO, db: Annotated[UserService, Depends(get_user_se
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
                                                       Depends()],
                                  service: Annotated[UserService,
-                                                    Depends(get_user_service)]):
+                                                    Depends()]):
     user = service.authenticate(form_data.username, form_data.password)
     if not user:
         raise HTTPException(

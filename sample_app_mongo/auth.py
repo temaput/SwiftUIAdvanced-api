@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from .config import Settings
+from .config import Settings, get_settings
 # to get a string like this run:
 # openssl rand -hex 32
 ALGORITHM = "HS256"
@@ -19,7 +19,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class AuthService:
-    def __init__(self, settings: Annotated[Settings, Depends()]):
+    def __init__(self, settings: Annotated[Settings, Depends(get_settings)]):
         self.settings = settings
 
     def verify_password(self, plain_password, hashed_password):

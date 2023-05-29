@@ -11,9 +11,7 @@ from .models import User, UserInDB
 
 class UserService:
 
-    def __init__(self, db: Annotated[AsyncIOMotorDatabase,
-                                     Depends(get_database)],
-                 auth: Annotated[AuthService, Depends()]):
+    def __init__(self, db: Annotated[AsyncIOMotorDatabase, Depends(get_database)], auth: Annotated[AuthService, Depends()]):
         self.db = db
         self.auth = auth
         self.collection = self.db['users']
@@ -23,7 +21,7 @@ class UserService:
             UserInDB(**user.dict(),
                      hashed_password=self.auth.get_password_hash(
                          user.password)))
-        return await self.collection.insert_one(user.dict())
+        return self.collection.insert_one(user)
 
     async def get(self, username: str):
         return await self.collection.find_one({"username": username})
@@ -43,7 +41,3 @@ class UserService:
 
     def validate_token(self, token: str):
         return self.auth.validate_token(token)
-
-
-def get_user_service():
-    return UserService()
