@@ -1,19 +1,9 @@
-from typing import Annotated
 from fastapi import Depends, FastAPI
 
-from .user.service import UserService
 
-from .user.models import SignupDTO
-
-
+from .user.controllers import router as user_router
 
 app = FastAPI()
 
 
-def get_service():
-    return UserService()
-
-@app.post("/signup/")
-async def signup(user: SignupDTO, db: Annotated[UserService, Depends(get_service)]):
-    result = await db.create(user)
-    return result
+app.include_router(user_router, prefix="/users", tags=["users"])

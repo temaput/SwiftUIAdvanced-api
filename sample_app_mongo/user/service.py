@@ -43,3 +43,7 @@ class UserService:
 
     def validate_token(self, token: str):
         return self.auth.validate_token(token)
+
+
+def get_user_service():
+    return UserService()
