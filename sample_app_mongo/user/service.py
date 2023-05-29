@@ -11,26 +11,35 @@ from .models import User, UserInDB
 
 class UserService:
 
-    def __init__(self, db: Annotated[AsyncIOMotorDatabase, Depends(get_database)], auth: Annotated[AuthService, Depends()]):
+    def __init__(self, db: Annotated[AsyncIOMotorDatabase,
+                                     Depends(get_database)],
+                 auth: Annotated[AuthService, Depends()]):
         self.db = db
         self.auth = auth
         self.collection = self.db['users']
 
-    async def create(self, user: User) -> UserInDB:
+    async def create(self, user: User):
         user = jsonable_encoder(
             UserInDB(**user.dict(),
                      hashed_password=self.auth.get_password_hash(
                          user.password)))
-        return self.collection.insert_one(user)
+        return await self.collection.insert_one(user)
 
     async def get(self, username: str):
-        return await self.collection.find_one({"username": username})
+        user = await self.collection.find_one({"username": username})
+        if user:
+            return user
+
+    async def getById(self, id: str) -> UserInDB | None:
+        user = await self.collection.find_one({"_id": id})
+        if user:
+            return user
 
     async def authenticate(self, username: str, password: str):
         user = await self.get(username)
         if not user:
             return False
-        if not self.auth.verify_password(password, user.password):
+        if not self.auth.verify_password(password, user.hashed_password):
             return False
         return user
 

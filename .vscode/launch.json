@@ -5,6 +5,28 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Python: Mongo Ref",
+			"type": "python",
+			"request": "launch",
+			"module": "uvicorn",
+			"args": [
+				"mongo_ref.main:app"
+			],
+			"jinja": true,
+			"justMyCode": true
+		},
+		{
+			"name": "Python: Mongo Sample",
+			"type": "python",
+			"request": "launch",
+			"module": "uvicorn",
+			"args": [
+				"sample_app_mongo.main:app"
+			],
+			"jinja": true,
+			"justMyCode": true
+		},
+		{
 			"name": "Python: FastAPI SQL App",
 			"type": "python",
 			"request": "launch",

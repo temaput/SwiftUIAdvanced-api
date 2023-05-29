@@ -35,11 +35,17 @@ async def get_current_active_user(
     return current_user
 
 
-@router.post("/signup/")
-async def signup(user: SignupDTO, service: Annotated[UserService, Depends()]):
+@router.post("/signup/", status_code=201)
+async def signup(user: SignupDTO, service: Annotated[UserService,
+                                                     Depends()]) -> User:
     result = await service.create(user)
-    
-    return result
+    new_user = await service.getById(result.inserted_id)
+    if not new_user:
+        raise HTTPException(status_code=500, detail="Could not create user")
+
+    new_user_pydantic = User(**new_user)
+
+    return new_user_pydantic
 
 
 @router.post("/token", response_model=TokenDTO)
@@ -47,13 +53,14 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
                                                       Depends()],
                                  service: Annotated[UserService,
                                                     Depends()]):
-    user = service.authenticate(form_data.username, form_data.password)
+    user = await service.authenticate(form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    user = User(**user)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = service.create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires)
