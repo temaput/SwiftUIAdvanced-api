@@ -1,29 +1,40 @@
 from datetime import timedelta
 from typing import Annotated
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from ..auth import AuthService
-from ..database import get_database
+from ..database import EnsureIndexes, get_database
 from .models import SignupDTO, UserInDB
+from pymongo import IndexModel, DESCENDING
+from pymongo.errors import DuplicateKeyError
+
+username_index_model = IndexModel([("username", DESCENDING)], unique=True)
+username_index_ensure = EnsureIndexes("users", [username_index_model])
 
 
 class UserService:
 
-    def __init__(self, db: Annotated[AsyncIOMotorDatabase,
-                                     Depends(get_database)],
-                 auth: Annotated[AuthService, Depends()]):
+    def __init__(self,
+                 db: Annotated[AsyncIOMotorDatabase,
+                               Depends(get_database)],
+                 auth: Annotated[AuthService, Depends()],
+                 _ensured=Depends(username_index_ensure)):
         self.db = db
         self.auth = auth
         self.collection = self.db['users']
 
     async def create(self, user: SignupDTO):
-        user = jsonable_encoder(
+        _user = jsonable_encoder(
             UserInDB(**user.dict(),
                      hashed_password=self.auth.get_password_hash(
                          user.password)))
-        return await self.collection.insert_one(user.dict())
+        try:
+            return await self.collection.insert_one(_user)
+        except DuplicateKeyError:
+            raise HTTPException(status_code=400,
+                                detail="Username already exists")
 
     async def get(self, username: str):
         user = await self.collection.find_one({"username": username})
