@@ -10,10 +10,9 @@ class User(BaseModel):
     disabled: bool = False
 
     class Config:
-            allow_population_by_field_name = True
-            arbitrary_types_allowed = True
-            json_encoders = {ObjectId: str}
-    
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
 
 
 class SignupDTO(BaseModel):
@@ -23,8 +22,7 @@ class SignupDTO(BaseModel):
 
 class UserInDB(User):
     hashed_password: str
-    
-   
+
 
 class TokenDTO(BaseModel):
     access_token: str

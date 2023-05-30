@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from ..auth import AuthService
 from ..database import get_database
-from .models import User, UserInDB
+from .models import SignupDTO, UserInDB
 
 
 class UserService:
@@ -18,29 +18,29 @@ class UserService:
         self.auth = auth
         self.collection = self.db['users']
 
-    async def create(self, user: User):
+    async def create(self, user: SignupDTO):
         user = jsonable_encoder(
             UserInDB(**user.dict(),
                      hashed_password=self.auth.get_password_hash(
                          user.password)))
-        return await self.collection.insert_one(user)
+        return await self.collection.insert_one(user.dict())
 
     async def get(self, username: str):
         user = await self.collection.find_one({"username": username})
         if user:
-            return user
+            return UserInDB(**user)
 
-    async def getById(self, id: str) -> UserInDB | None:
+    async def getById(self, id: str):
         user = await self.collection.find_one({"_id": id})
         if user:
-            return user
+            return UserInDB(**user)
 
     async def authenticate(self, username: str, password: str):
         user = await self.get(username)
         if not user:
-            return False
+            return None
         if not self.auth.verify_password(password, user.hashed_password):
-            return False
+            return None
         return user
 
     def create_access_token(self,

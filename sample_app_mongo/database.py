@@ -5,15 +5,15 @@ from motor import motor_asyncio
 from .config import get_settings, Settings
 
 
-
 def get_database(config: Annotated[Settings, Depends(get_settings)]):
     client = motor_asyncio.AsyncIOMotorClient(config.mongo_url)
 
-    db =  client['sample_app_db']
+    db = client['sample_app_db']
     return db
 
 
 class PyObjectId(ObjectId):
+
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
